@@ -5,7 +5,7 @@
  * @param {Object} options.core module for interacting with GitHub Actions workflow commands and outputs.
 */
 export default ({context, core}) => {
-    const localRun = !context.payload.act;
+    const localRun = context.payload.act;
     let commentBody = context.payload.comment?.body || '';
 
     if (localRun)
@@ -22,6 +22,9 @@ export default ({context, core}) => {
     if (environmentMatch) {
         environment = environmentMatch[1];
         console.log(`Environment: ${environment}`);
+    } else {
+        core.setFailed("No environment specified. Aborting workflow.");
+        return;
     }
 
     // Parse project
@@ -29,9 +32,6 @@ export default ({context, core}) => {
     if (projectMatch) {
         project = projectMatch[1];
         console.log(`Project: ${project}`);
-    } else {
-        core.setFailed("No project specified. Aborting workflow.");
-        return;
     }
 
     // Parse infra

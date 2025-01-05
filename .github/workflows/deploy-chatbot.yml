@@ -101,6 +101,7 @@ jobs:
 
           
       - name: Update Deployment Status
+        if: steps.parse_command.outputs.project != '' # TODO provisional ñapa while we don't add the remaining outputs
         uses: actions/github-script@v7
         id: update-comment-with-deployment-status
         with:

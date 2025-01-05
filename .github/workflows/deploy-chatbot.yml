@@ -8,6 +8,9 @@ on:
 jobs:
   handle-deployment-on-pr-comment:
     runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.parse_command.outputs.infra }}
+      environment: ${{ steps.parse_command.outputs.environment }}
 
     steps:      
       - uses: actions/checkout@v4

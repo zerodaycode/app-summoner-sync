@@ -83,26 +83,21 @@ jobs:
       
       - name: Deploy Infra
         if: steps.parse_command.outputs.infra != ''
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            case "${{ steps.parse_command.outputs.infra }}" in
-              postgres)
-                echo "Deploying Postgres..."
-                ;;
-              redis)
-                echo "Deploying Redis..."
-                ;;
-              *)
-                echo "Unknown infra: ${{ steps.parse_command.outputs.infra }}"
-                exit 1
-                ;;
-            esac
-            echo 'artifact="${{ steps.parse_command.outputs.infra }}"' >> $GITHUB_ENV
-            echo 'environment="${{ steps.parse_command.outputs.environment }}"' >> $GITHUB_ENV
+        run: |
+          case "${{ steps.parse_command.outputs.infra }}" in
+            postgres)
+              echo "Deploying Postgres..."
+              ;;
+            redis)
+              echo "Deploying Redis..."
+              ;;
+            *)
+              echo "Unknown infra: ${{ steps.parse_command.outputs.infra }}"
+              exit 1
+              ;;
+          esac
+          echo 'artifact="${{ steps.parse_command.outputs.infra }}"' >> $GITHUB_ENV
+          echo 'environment="${{ steps.parse_command.outputs.environment }}"' >> $GITHUB_ENV
 
           
       - name: Update Deployment Status

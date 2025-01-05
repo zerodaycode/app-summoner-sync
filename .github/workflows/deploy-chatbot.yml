@@ -118,4 +118,8 @@ jobs:
             await updatePrComment(github, context, steps);
 
   call-deploy-infra-artifact:
+    needs: handle-deployment-on-pr-comment
     uses: zerodaycode/app-summoners-sync/.github/workflows/deploy-infra.yml@develop
+    with:
+      artifact: ${{ needs.handle-deployment-on-pr-comment.outputs.artifact }}
+      environment: ${{ needs.handle-deployment-on-pr-comment.outputs.environment }}

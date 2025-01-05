@@ -80,6 +80,7 @@ jobs:
               details: details,
             };
 
+      
       - name: Deploy Infra
         if: steps.parse_command.outputs.infra != ''
         uses: appleboy/ssh-action@v1.2.0
@@ -91,22 +92,19 @@ jobs:
             case "${{ steps.parse_command.outputs.infra }}" in
               postgres)
                 echo "Deploying Postgres..."
-                docker run -d --name postgres --restart always -e POSTGRES_PASSWORD=mysecretpassword postgres
                 ;;
               redis)
                 echo "Deploying Redis..."
-                docker run -d --name redis --restart always redis
-                ;;
-              all)
-                echo "Deploying Postgres and Redis..."
-                docker run -d --name postgres --restart always -e POSTGRES_PASSWORD=mysecretpassword postgres
-                docker run -d --name redis --restart always redis
                 ;;
               *)
                 echo "Unknown infra: ${{ steps.parse_command.outputs.infra }}"
+                exit 1
                 ;;
             esac
+            echo 'artifact="${{ steps.parse_command.outputs.infra }}"' >> $GITHUB_ENV
+            echo 'environment="${{ steps.parse_command.outputs.environment }}"' >> $GITHUB_ENV
 
+          
       - name: Update Deployment Status
         uses: actions/github-script@v7
         id: update-comment-with-deployment-status
@@ -118,3 +116,6 @@ jobs:
               await import('${{ github.workspace }}/actions_scripts/update_pr_comment.js');
             
             await updatePrComment(github, context, steps);
+
+  call-deploy-infra-artifact:
+    uses: zerodaycode/app-summoners-sync/.github/workflows/deploy-infra.yml@develop

@@ -23,6 +23,10 @@ jobs:
           echo "Generated filename: $filename"
           echo "COMPOSE_FILENAME=$filename" >> $GITHUB_ENV
 
+      - name: Debug secret name
+        run: |
+          echo "secret name : ${{ inputs.secret_name }}"
+
       - name: Transfer Compose File to Server
         uses: appleboy/scp-action@v0.1.7
         with:

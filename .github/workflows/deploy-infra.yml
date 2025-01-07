@@ -48,5 +48,5 @@ jobs:
             cd /opt/summoners-sync/infra/docker
 
             echo "${{ secrets[inputs.secret_name] }}" > .env
-
+            ls -l
             docker-compose --env-file .env -f ${{ env.COMPOSE_FILENAME }} up -d

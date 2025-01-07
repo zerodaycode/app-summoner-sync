@@ -30,9 +30,9 @@ jobs:
       - name: Transfer Compose File to Server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.DO_SSH_HOST_PRE }}
+          username: ${{ secrets.DO_SSH_USER_PRE }}
+          key: ${{ secrets.DO_SSH_KEY_PRE }}
           source: .github/workflows/infra/docker/postgres-compose-pre.yml
           target: /opt/summoners-sync/infra/docker/${{ env.COMPOSE_FILENAME }}
           rm: true
@@ -41,9 +41,9 @@ jobs:
       - name: Deploy Infra
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.DO_SSH_HOST_PRE }}
+          username: ${{ secrets.DO_SSH_USER_PRE }}
+          key: ${{ secrets.DO_SSH_KEY_PRE }}
           script: |
             cd /opt/summoners-sync/infra/docker
 

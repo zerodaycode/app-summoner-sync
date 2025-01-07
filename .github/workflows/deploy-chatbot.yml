@@ -101,10 +101,10 @@ jobs:
               exit 1
               ;;
           esac
-          INFRA_UPPER=$(echo "${{  inputs.artifact }}" | tr 'a-z' 'A-Z')
-          ENV_UPPER=$(echo "${{  inputs.environment }}" | tr 'a-z' 'A-Z')
+          INFRA_UPPER=$(echo "${{steps.parse_command.outputs.environment }}" | tr 'a-z' 'A-Z')
+          ENV_UPPER=$(echo "${{ steps.parse_command.outputs.environment }}" | tr 'a-z' 'A-Z')
 
-          SECRET_NAME="SS_${INFRA_UPPER}_${ENV_UPPER}"
+          secret_name="SS_${INFRA_UPPER}_${ENV_UPPER}"
 
           echo "Generated secret_name: $secret_name"
           echo "SECRET_NAME=$secret_name" >> $GITHUB_OUTPUT

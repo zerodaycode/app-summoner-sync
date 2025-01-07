@@ -23,9 +23,9 @@ jobs:
           echo "Generated filename: $filename"
           echo "COMPOSE_FILENAME=$filename" >> $GITHUB_ENV
 
-      - name: Debug secret name
-        run: |
-          echo "secret name : ${{ inputs.secret_name }}"
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
 
       - name: Transfer Compose File to Server
         uses: appleboy/scp-action@v0.1.7

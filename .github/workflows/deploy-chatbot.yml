@@ -11,6 +11,7 @@ jobs:
     outputs:
       artifact: ${{ steps.parse_command.outputs.infra }}
       environment: ${{ steps.parse_command.outputs.environment }}
+      secret_name: ${{  steps.deploy-infra.outputs.secret_name}}
 
     steps:      
       - uses: actions/checkout@v4
@@ -85,6 +86,7 @@ jobs:
 
       
       - name: Deploy Infra
+        id: deploy-infra
         if: steps.parse_command.outputs.infra != ''
         run: |
           case "${{ steps.parse_command.outputs.infra }}" in
@@ -99,8 +101,13 @@ jobs:
               exit 1
               ;;
           esac
-          echo 'artifact="${{ steps.parse_command.outputs.infra }}"' >> $GITHUB_ENV
-          echo 'environment="${{ steps.parse_command.outputs.environment }}"' >> $GITHUB_ENV
+          INFRA_UPPER=$(echo "${{  inputs.artifact }}" | tr 'a-z' 'A-Z')
+          ENV_UPPER=$(echo "${{  inputs.environment }}" | tr 'a-z' 'A-Z')
+
+          SECRET_NAME="SS_${INFRA_UPPER}_${ENV_UPPER}"
+
+          echo "Generated secret_name: $secret_name"
+          echo "SECRET_NAME=$secret_name" >> $GITHUB_OUTPUT
 
           
       - name: Update Deployment Status
@@ -122,3 +129,6 @@ jobs:
     with:
       artifact: ${{ needs.handle-deployment-on-pr-comment.outputs.artifact }}
       environment: ${{ needs.handle-deployment-on-pr-comment.outputs.environment }}
+      secret_name: ${{ needs.handle-deployment-on-pr-comment.outputs.secret_name }}
+    secrets: inherit
+

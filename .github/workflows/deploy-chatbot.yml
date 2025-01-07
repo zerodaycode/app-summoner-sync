@@ -101,7 +101,7 @@ jobs:
               exit 1
               ;;
           esac
-          INFRA_UPPER=$(echo "${{steps.parse_command.outputs.environment }}" | tr 'a-z' 'A-Z')
+          INFRA_UPPER=$(echo "${{steps.parse_command.outputs.infra }}" | tr 'a-z' 'A-Z')
           ENV_UPPER=$(echo "${{ steps.parse_command.outputs.environment }}" | tr 'a-z' 'A-Z')
 
           secret_name="SS_${INFRA_UPPER}_${ENV_UPPER}"

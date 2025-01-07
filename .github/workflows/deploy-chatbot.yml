@@ -1,0 +1,134 @@
+name: Handle deployment commands in PR Comments
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  handle-deployment-on-pr-comment:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.parse_command.outputs.infra }}
+      environment: ${{ steps.parse_command.outputs.environment }}
+      secret_name: ${{  steps.deploy-infra.outputs.secret_name}}
+
+    steps:      
+      - uses: actions/checkout@v4
+
+      - name: Parse Deployment Command
+        uses: actions/github-script@v7
+        id: parse_command
+        with:
+          script: |
+            const { default: parseDeployCommand } =
+              await import('${{ github.workspace }}/actions_scripts/parse_deployment_command.js');
+            
+            parseDeployCommand({context, core});
+            
+      - name: Get GH Zero Day Code APP token
+        if: ${{ !github.event.act }}
+        uses: actions/create-github-app-token@v1
+        id: zdc-auth-app-token
+        with:
+          app-id: ${{ vars.ZDC_AUTH_APP_ID }}
+          private-key: ${{ secrets.ZDC_AUTH_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Notify the user
+        uses: actions/github-script@v7
+        id: notify_user
+        with:
+          script: |
+            const environment = `${{ steps.parse_command.outputs.environment }}`;
+            const project     = `${{ steps.parse_command.outputs.project }}`;
+            const infra       = `${{ steps.parse_command.outputs.infra }}`;
+
+            const { default: notifyUser } =
+              await import('${{ github.workspace }}/actions_scripts/notify_user.js');
+            
+            return await notifyUser({github, context, core, environment, project, infra});
+
+      - name: Trigger Deployment Workflow
+        uses: actions/github-script@v7
+        id: trigger_deployment_workflow
+        with:
+          github-token: ${{ steps.zdc-auth-app-token.outputs.token || github.token }}
+          script: |
+            const environment = `${{ steps.parse_command.outputs.environment }}`;
+            const project = `${{ steps.parse_command.outputs.project }}`;
+            const workflowId = `deploy-${environment}.yml`;
+
+            let result = "";
+            let details = "";
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: project,
+                workflow_id: workflowId,
+                ref: 'main', // TODO: Change branch to ref if pre, otherwise PRO should be only on main
+              });
+              status = 'OK';
+              details = 'succedeed';
+            } catch (ex) {
+              console.log(`FAILED TO TRIGGER WORKFLOW:\n${ex}`);
+              status = 'ERR';
+              details = `Failed to trigger the workflow ${workflowId} on repo: ${project}`;
+            }
+
+            // Return triggered details
+            return {
+              workflowId: workflowId,
+              status: status,
+              details: details,
+            };
+
+      
+      - name: Deploy Infra
+        id: deploy-infra
+        if: steps.parse_command.outputs.infra != ''
+        run: |
+          case "${{ steps.parse_command.outputs.infra }}" in
+            postgres)
+              echo "Deploying Postgres..."
+              ;;
+            redis)
+              echo "Deploying Redis..."
+              ;;
+            *)
+              echo "Unknown infra: ${{ steps.parse_command.outputs.infra }}"
+              exit 1
+              ;;
+          esac
+          INFRA_UPPER=$(echo "${{steps.parse_command.outputs.infra }}" | tr 'a-z' 'A-Z')
+          ENV_UPPER=$(echo "${{ steps.parse_command.outputs.environment }}" | tr 'a-z' 'A-Z')
+
+          secret_name="SS_${INFRA_UPPER}_${ENV_UPPER}"
+
+          echo "Generated secret_name: $secret_name"
+          echo "SECRET_NAME=$secret_name" >> $GITHUB_OUTPUT
+
+          
+      - name: Update Deployment Status
+        if: steps.parse_command.outputs.project != '' # TODO provisional ñapa while we don't add the remaining outputs
+        uses: actions/github-script@v7
+        id: update-comment-with-deployment-status
+        with:
+          script: |
+            const steps = ${{ toJSON(steps) }};
+
+            const { default: updatePrComment } = 
+              await import('${{ github.workspace }}/actions_scripts/update_pr_comment.js');
+            
+            await updatePrComment(github, context, steps);
+
+  call-deploy-infra-artifact:
+    needs: handle-deployment-on-pr-comment
+    uses: zerodaycode/app-summoners-sync/.github/workflows/deploy-infra.yml@develop
+    with:
+      artifact: ${{ needs.handle-deployment-on-pr-comment.outputs.artifact }}
+      environment: ${{ needs.handle-deployment-on-pr-comment.outputs.environment }}
+      secret_name: ${{ needs.handle-deployment-on-pr-comment.outputs.secret_name }}
+    secrets: inherit
+

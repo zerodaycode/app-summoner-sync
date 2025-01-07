@@ -29,6 +29,7 @@ As an initial guideline, we intend this repo to look something similar to this
 app-summoner-sync/
 ├── .github/
 │   ├── workflows/              # GitHub Actions for deployment automation and repositories management
+│   │   └── deploy-chatbot.yml
 │   │   └── deploy-pre.yml
 │   │   └── deploy-pro.yml
 ├── submodules/                 # Includes microservice repositories

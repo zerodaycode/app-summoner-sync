@@ -1,2 +1,8 @@
+.secrets
+
 .nvim/
 .idea/
+
+node_modules/
+
+.env
